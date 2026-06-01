@@ -1,0 +1,13 @@
+{
+  "name": "tgrabbit",
+  "private": true,
+  "scripts": {
+    "install:deps": "npm install --prefix nest-microservices",
+    "start:producer": "npm run start:producer --prefix nest-microservices",
+    "start:consumer": "npm run start:consumer --prefix nest-microservices",
+    "start:notifier": "npm run start:notifier --prefix nest-microservices",
+    "test": "npm test --prefix nest-microservices",
+    "docker:up": "docker compose up --build",
+    "docker:rabbitmq": "docker compose up -d rabbitmq"
+  }
+}

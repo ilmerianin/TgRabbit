@@ -4,21 +4,56 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   producer:
-    build: ./apps/producer
+    build:
+      context: ./nest-microservices
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: producer
     ports:
       - "3000:3000"
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     env_file:
       - .env
+    environment:
+      PORT: 3000
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+
   consumer:
-    build: ./apps/consumer
+    build:
+      context: ./nest-microservices
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: consumer
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
+      notifier:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      PORT: 3002
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      NOTIFIER_URL: http://notifier:3001
+
   notifier:
-    build: ./apps/notifier
+    build:
+      context: ./nest-microservices
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: notifier
     ports:
       - "3001:3001"
     env_file:
       - .env
+    environment:
+      PORT: 3001
