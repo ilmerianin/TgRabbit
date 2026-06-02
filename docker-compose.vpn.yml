@@ -1,0 +1,23 @@
+# Overlay for Linux hosts where Telegram is reachable via VPN on the host,
+# but Docker bridge network gets intermittent ECONNRESET to api.telegram.org.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.vpn.yml up --build
+#
+# Notifier uses the host network stack (same routes/VPN as curl on the host).
+# Consumer reaches Notifier via host.docker.internal instead of service DNS.
+
+services:
+  notifier:
+    network_mode: host
+    ports: []
+    # При network_mode: host DNS с хоста; dns ниже игнорируется Docker.
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+
+  consumer:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      NOTIFIER_URL: http://host.docker.internal:3001

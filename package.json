@@ -7,7 +7,10 @@
     "start:consumer": "npm run start:consumer --prefix nest-microservices",
     "start:notifier": "npm run start:notifier --prefix nest-microservices",
     "test": "npm test --prefix nest-microservices",
+    "test:e2e": "npm run test:e2e --prefix nest-microservices",
+    "test:cov": "npm run test:cov --prefix nest-microservices",
     "docker:up": "docker compose up --build",
-    "docker:rabbitmq": "docker compose up -d rabbitmq"
+    "docker:rabbitmq": "docker compose up -d rabbitmq",
+    "smoke-test": "bash scripts/smoke-test.sh"
   }
 }

@@ -4,46 +4,13 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    restart: unless-stopped
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 10s
       timeout: 5s
       retries: 5
-
-  producer:
-    build:
-      context: ./nest-microservices
-      dockerfile: Dockerfile
-      args:
-        APP_NAME: producer
-    ports:
-      - "3000:3000"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    env_file:
-      - .env
-    environment:
-      PORT: 3000
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
-
-  consumer:
-    build:
-      context: ./nest-microservices
-      dockerfile: Dockerfile
-      args:
-        APP_NAME: consumer
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      notifier:
-        condition: service_started
-    env_file:
-      - .env
-    environment:
-      PORT: 3002
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
-      NOTIFIER_URL: http://notifier:3001
+      start_period: 10s
 
   notifier:
     build:
@@ -53,7 +20,63 @@ services:
         APP_NAME: notifier
     ports:
       - "3001:3001"
+    restart: unless-stopped
     env_file:
       - .env
     environment:
       PORT: 3001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  producer:
+    build:
+      context: ./nest-microservices
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: producer
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      PORT: 3000
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  consumer:
+    build:
+      context: ./nest-microservices
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: consumer
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      notifier:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      PORT: 3002
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      NOTIFIER_URL: http://notifier:3001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
